@@ -164,7 +164,7 @@ async def withdraw_code_handler(message: Message, state: FSMContext) -> None:
         
         await(message.answer("🕘 Ваша заявка в расмотрении...", reply_markup=None))
     
-        await message.bot.send_message(constants.withdraw_chat_id, f"{html.bold("ЗАПРОС НА ВЫВОД")}\n\nПользователь: @{username}\nМетод: {method}\nРеквизит: {html.code(props)}\n1X ID: {html.code(xid)}\nКод: {html.code(code)}")
+        await message.bot.send_message(constants.withdraw_chat_id, f"{html.bold('ЗАПРОС НА ВЫВОД')}\n\nПользователь: @{username}\nМетод: {method}\nРеквизит: {html.code(props)}\n1X ID: {html.code(xid)}\nКод: {html.code(code)}")
         await message.bot.send_message(constants.withdraw_chat_id, str(message.chat.id), reply_markup=buttons.main_inline_admin_withdraw_kb())
         await state.clear()
 # 
