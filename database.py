@@ -1,6 +1,6 @@
 import sqlite3
 from contextlib import contextmanager
-
+import time
 
 
 
@@ -10,7 +10,9 @@ def get_connection():
     cursor = connection.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS Bot (admin TEXT NOT NULL, props TEXT NOT NULL)''')
 
-    cursor.execute('''CREATE TABLE IF NOT EXISTS Users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, xid INTEGER)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS Users (id INTEGER PRIMARY KEY, username, xid INTEGER)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS Payments (date TEXT, id INTEGER, username TEXT, xid INTEGER, sum INTEGER, method TEXT)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS Withdraws (date TEXT, id INTEGER, username TEXT, xid INTEGER, code INTEGER, method TEXT, props TEXT)''')
 
     # cursor.execute('INSERT OR IGNORE INTO Bot (admin, props) VALUES (?, ?)', ('ocean_sup', "996100200300"))
     try:
@@ -73,3 +75,16 @@ def update_user(id: int, username: str, xid: int):
                     "UPDATE Users SET xid = ? WHERE id = ?",
                     (xid, id)
                 )
+                
+                
+                
+def update_payment_history(user_id, username, xid, amount, method):
+    with get_connection() as cursor:
+        date = time.strftime("%d.%m.%Y-%H:%M")         
+        cursor.execute("""INSERT INTO Payments (date, id, username, xid, sum, method) VALUES (?, ?, ?, ?, ?, ?)""", (date, user_id, username, xid, amount, method))
+
+def update_withdraw_history(user_id, username, xid, code, method, props):
+    with get_connection() as cursor:
+        date = time.strftime("%d.%m.%Y-%H:%M")         
+        cursor.execute("""INSERT INTO Withdraws (date, id, username, xid, code, method, props) VALUES (?, ?, ?, ?, ?, ?, ?)""", (date, user_id, username, xid, code, method, props))
+                

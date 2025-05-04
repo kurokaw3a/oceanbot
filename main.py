@@ -30,6 +30,7 @@ class EditBot(StatesGroup):
     waiting_for_photo = State()
 
 class BotState(StatesGroup):
+    waiting_response = State()
     admin = State()
     replenish = State()
     replenish_id = State()
@@ -45,13 +46,20 @@ class BotState(StatesGroup):
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message, state) -> None:
+    current_state = await state.get_state()
+    if current_state != BotState.waiting_response:
      await state.clear()
      await message.answer(f"Привет, {html.bold(message.from_user.full_name)}!\n\n💎 Пополнение/Вывод: 0%\n🐬 Моментальные пополнения\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(message.from_user.username))
-
+    else:
+     await message.answer("Пожалуйста дождитесь финального ответа системы!")
+        
 @dp.message(F.text == "Отменить")
 async def cancel_handler(message: Message, state: FSMContext):
-    await state.clear()
-    await command_start_handler(message, state)
+    current_state = await state.get_state()
+    if current_state != BotState.waiting_response:
+     await command_start_handler(message, state)
+    else:
+     await message.answer("Пожалуйста дождитесь финального ответа системы!")
 
 
 
@@ -130,7 +138,7 @@ async def withdraw_props_handler(message: Message, state: FSMContext) -> None:
             else:
              await message.answer("Введите ID(Номер счёта) 1X!", reply_markup=buttons.main_cancel_kb())
         else:
-            await message.answer("Слишком короткий ID")
+            await message.answer("Слишком короткий номер")
       else:
             await message.answer("Укажите правильный номер (только цифры).")
 
@@ -145,7 +153,7 @@ async def withdraw_id_handler(message: Message, state: FSMContext) -> None:
                 await message.answer(f"Адрес вывода: Город {constants.city} Улица {constants.street}")
                 await message.answer("Введите код от 1X", reply_markup=buttons.main_cancel_kb())
             else:
-                await message.answer("Слишком короткий ID")
+                await message.answer("Слишком короткий код")
       else:
             await message.answer("Укажите правильный ID (только цифры).")
 
@@ -153,6 +161,10 @@ async def withdraw_id_handler(message: Message, state: FSMContext) -> None:
 async def withdraw_code_handler(message: Message, state: FSMContext) -> None:
     length = len(message.text)
     if(length > 3):
+        await state.update_data(code=message.text)
+        await state.update_data(user_id=message.chat.id)
+        
+        
         data = await state.get_data()
         method = data.get("withdraw")
         props = data.get("withdraw_props")
@@ -162,11 +174,10 @@ async def withdraw_code_handler(message: Message, state: FSMContext) -> None:
         
         
         
-        await(message.answer("🕘 Ваша заявка в расмотрении...", reply_markup=None))
+        await(message.answer("🕘 Ваша заявка в расмотрении...\n\nПожалуйста дождитесь финального ответа системы!", reply_markup=None))
     
         await message.bot.send_message(constants.withdraw_chat_id, f"{html.bold('ЗАПРОС НА ВЫВОД')}\n\nПользователь: @{username}\nМетод: {method}\nРеквизит: {html.code(props)}\n1X ID: {html.code(xid)}\nКод: {html.code(code)}")
         await message.bot.send_message(constants.withdraw_chat_id, str(message.chat.id), reply_markup=buttons.main_inline_admin_withdraw_kb())
-        await state.clear()
 # 
 
 
@@ -204,11 +215,13 @@ async def id_handler(message: Message, state: FSMContext) -> None:
             await message.answer("Укажите правильный ID (только цифры).")
             
 @dp.message(BotState.replenish_sum)
-async def sum_handler (message: Message, state: FSMContext) -> None:  
-    if message.text.isdigit():
+async def sum_handler (message: Message, state: FSMContext) -> None: 
+    try: 
+     if message.text.isdigit():
         user_sum = int(message.text)
         if user_sum > 99 and user_sum < 100000:
             await state.set_state(BotState.replenish_check)       
+            await state.update_data(amount=message.text)
             await message.answer("📤")
             data = database.get_bot_data()
             d = await state.get_data() 
@@ -224,8 +237,10 @@ async def sum_handler (message: Message, state: FSMContext) -> None:
             asyncio.create_task(timer(message, state))
         else:
             await message.answer("\nМинимальная: 100\nМаксимальная: 100 000")   
-    else:
-        await message.answer("Введите сумму пополнения!")   
+     else:
+        await message.answer("Введите сумму пополнения!")  
+    except TypeError:
+        await message.answer("Не отправляйте файлы и т.п") 
             
 async def timer(message: Message, state: FSMContext, duration: int = 300):
     timer_message = await message.answer("⏳ Ожидаем оплату... Осталось 5:00")
@@ -263,42 +278,67 @@ async def timer(message: Message, state: FSMContext, duration: int = 300):
         
 @dp.message(BotState.replenish_check)
 async def check_handler(message: Message, state: FSMContext):
+    await state.update_data(user_id=message.chat.id)
+    
+    
     data = await state.get_data()
     xid = data.get("user_xbet_id")
     method = data.get("replenish")
     database.update_user(message.chat.id, message.from_user.username, xid)
     
-    await(message.answer("🕘 Ваша заявка в расмотрении...", reply_markup=None))
-    await state.clear()
-    
+    await(message.answer("🕘 Ваша заявка в расмотрении...\n\nПожалуйста дождитесь финального ответа системы!", reply_markup=None))
+     
     await message.bot.forward_message(constants.replenish_chat_id, message.chat.id, message.message_id)
     await message.bot.send_message(constants.replenish_chat_id, f"Пользователь: @{message.from_user.username}\n1X ID: {html.code(xid)}\nМетод: {method}")
     await message.bot.send_message(constants.replenish_chat_id, str(message.chat.id), reply_markup=buttons.main_inline_admin_replenish_kb())
+    await state.set_state(BotState.waiting_response)
 
-@dp.callback_query()
-async def query_handler(callback: CallbackQuery) -> None:
+@dp.callback_query(BotState.waiting_response)
+async def query_handler(callback: CallbackQuery, state: FSMContext) -> None:
     if callback.data == "accept":
        username = database.get_username(callback.message.text)
        await callback.message.bot.send_message(callback.message.text, "✅ Ваш счет пополнен!", reply_markup=buttons.main_kb(username))
        await callback.message.edit_reply_markup(None)
        await callback.message.edit_text("Одорен")
        
+       data = await state.get_data()
+       user_id = data.get("user_id")
+       xid = data.get("user_xbet_id")
+       amount = data.get("amount")
+       method = data.get("replenish")
+       
+       database.update_payment_history(user_id=user_id, username=username, xid=xid, amount=amount, method=method)
+       await state.clear()
+       
     if(callback.data == "cancel"):
        username = database.get_username(callback.message.text)
        await callback.message.bot.send_message(callback.message.text, "❌ Ваша заявка была отклонена. Проверьте 1X ID или ЧЕК который вы отправили.\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(username))
        await callback.message.edit_reply_markup(None)
        await callback.message.edit_text("Отклонён")
+       await state.clear()
+       
     if callback.data == "waccept":
        username = database.get_username(callback.message.text)
        await callback.message.bot.send_message(callback.message.text, "✅ Вывод прошёл успешно", reply_markup=buttons.main_kb(username))
        await callback.message.edit_reply_markup(None)
        await callback.message.edit_text("Одорен")
        
+       data = await state.get_data()
+       user_id = data.get("user_id")
+       xid = data.get("user_xbet_id")
+       code = data.get("code")
+       method = data.get("withdraw")
+       props = data.get("withdraw_props")
+       
+       database.update_payment_history(user_id=user_id, username=username, xid=xid, code=code, method=method, props=props)
+       await state.clear()
+       
     if(callback.data == "wcancel"):
        username = database.get_username(callback.message.text)
        await callback.message.bot.send_message(callback.message.text, "❌ Ваша заявка была отклонена. Проверьте 1X ID или НОМЕР который вы отправили.\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(username))
        await callback.message.edit_reply_markup(None)
        await callback.message.edit_text("Отклонён")
+       await state.clear() 
 # 
             
             
