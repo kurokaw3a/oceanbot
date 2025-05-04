@@ -28,12 +28,30 @@ def main_admin_kb():
         [KeyboardButton(text="Редактировать службу поддержки")],
         [KeyboardButton(text="Редактировать реквизиты")],
         [KeyboardButton(text="Загрузить другой QR")],
+        [KeyboardButton(text="Добавить реквизит")],
         [KeyboardButton(text="Отменить")]
     ]
     keyboard = ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True, one_time_keyboard=True, input_field_placeholder="Что вы хотите сделать?")
     return keyboard
 
 
+def main_admin_props_kb(main_props, props):
+    kb_list = [[KeyboardButton(text=main_props + " ⭐")]]
+    
+    for prop in props:
+        kb_list.append([KeyboardButton(text=prop)])
+    kb_list.append([KeyboardButton(text="Отменить")])
+    keyboard = ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True, one_time_keyboard=True)
+    return keyboard
+
+def main_admin_props_edit_kb():
+    kb_list = [
+        [KeyboardButton(text="Удалить")],
+        [KeyboardButton(text="Отменить")]
+    ]
+    keyboard = ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True, one_time_keyboard=True)
+    return keyboard
+    
 
 
 

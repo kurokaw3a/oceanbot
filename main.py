@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 import database
+import random
 
 from aiogram import Bot, Dispatcher, html, F
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -26,7 +27,12 @@ dp = Dispatcher(storage=MemoryStorage())
 
 class EditBot(StatesGroup):
     waiting_for_admin = State()
+    
+    waiting_for_props_select = State()
     waiting_for_props = State()
+    waiting_for_props_edit_or_delete = State()
+    
+    waiting_for_new_props = State()
     waiting_for_photo = State()
 
 class BotState(StatesGroup):
@@ -75,6 +81,7 @@ async def replenish_handler(message: Message, state: FSMContext):
 async def withdraw_handler(message: Message, state: FSMContext):
       await state.set_state(BotState.withdraw)
       await message.answer("⬇", reply_markup=buttons.main_cancel_kb())
+      await message.answer("❗ВАЖНО!!! ВЫВОД СРЕДСТВ ОСУЩЕСТВЛЯЕТСЯ ТОЛЬКО НА ТЕ РЕКВИЗИТЫ С КОТОРЫХ БЫЛ СОВЕРШЕН ПЛАТЁЖ❗")
       await message.answer("Выберите способ вывода:", reply_markup=buttons.main_inline_withdraw_kb())
 # 
 
@@ -94,13 +101,25 @@ async def admin_options_handler(message: Message, state: FSMContext):
 async def bot_admin_handler(message: Message, state: FSMContext):
     await admin.handle_admin(message, state)
 
+@dp.message(EditBot.waiting_for_props_select)
+async def bot_props_slect_handler(message: Message, state: FSMContext):
+    await admin.handle_props_select(message, state)
+
 @dp.message(EditBot.waiting_for_props)
 async def bot_props_handler(message: Message, state: FSMContext):
     await admin.handle_props(message, state)
+    
+@dp.message(EditBot.waiting_for_props_edit_or_delete)
+async def bot_props_handler(message: Message, state: FSMContext):
+    await admin.handle_props_edit_or_delete(message, state)
 
 @dp.message(EditBot.waiting_for_photo, F.photo)
 async def bot_qr_handler(message: Message, state: FSMContext):
     await admin.handle_photo(message, state)
+
+@dp.message(EditBot.waiting_for_new_props)
+async def bot_new_props_handler(message: Message, state: FSMContext):
+    await admin.handle_new_props(message, state)
 # 
 
 
@@ -136,7 +155,8 @@ async def withdraw_props_handler(message: Message, state: FSMContext) -> None:
             if xid:
              await message.answer("Введите ID(Номер счёта) 1X!", reply_markup=buttons.main_id_kb(xid))
             else:
-             await message.answer("Введите ID(Номер счёта) 1X!", reply_markup=buttons.main_cancel_kb())
+             await message.answer("🚩 Вывод доступен только тем пользователям, которые\nосуществляли пополнение через нашего бота", reply_markup=buttons.main_kb(message.from_user.username))
+             state.clear()
         else:
             await message.answer("Слишком короткий номер")
       else:
@@ -178,6 +198,7 @@ async def withdraw_code_handler(message: Message, state: FSMContext) -> None:
     
         await message.bot.send_message(constants.withdraw_chat_id, f"{html.bold('ЗАПРОС НА ВЫВОД')}\n\nПользователь: @{username}\nМетод: {method}\nРеквизит: {html.code(props)}\n1X ID: {html.code(xid)}\nКод: {html.code(code)}")
         await message.bot.send_message(constants.withdraw_chat_id, str(message.chat.id), reply_markup=buttons.main_inline_admin_withdraw_kb())
+        await state.set_state(BotState.waiting_response)
 # 
 
 
@@ -220,12 +241,14 @@ async def sum_handler (message: Message, state: FSMContext) -> None:
      if message.text.isdigit():
         user_sum = int(message.text)
         if user_sum > 99 and user_sum < 100000:
+            
             await state.set_state(BotState.replenish_check)       
             await state.update_data(amount=message.text)
             await message.answer("📤")
-            data = database.get_bot_data()
+            
             d = await state.get_data() 
             qr = d.get("replenish")  
+            
             if qr == 'qr':
              await message.answer(f"Сумма к оплате: {html.code(message.text)}" + "\n\nРекзвизиты: " + html.code("QR Код") + "\nНажмите чтобы скопировать ☝\n\nОтправьте УКАЗАННУЮ СУММУ\nна счёт и ОТПРАВЬТЕ ЧЕК")
              path = os.path.join(IMG_DIR, "qr.jpg")
@@ -233,7 +256,12 @@ async def sum_handler (message: Message, state: FSMContext) -> None:
               photo = FSInputFile(path)
               await message.answer_photo(photo)
             else:
-             await message.answer(f"Сумма к оплате: {html.code(message.text)}" + "\n\nРекзвизиты: " + html.code(data["props"]) + "\nНажмите чтобы скопировать ☝\n\nОтправьте УКАЗАННУЮ СУММУ\nна счёт и ОТПРАВЬТЕ ЧЕК")
+             data = database.get_bot_data()
+             props = data["props"]
+             new_props = data["new_props"]
+             all_props = [props] +  new_props
+             random_props = random.choice(all_props) if all_props else None
+             await message.answer(f"Сумма к оплате: {html.code(message.text)}" + "\n\nРекзвизиты: " + html.code(random_props) + "\nНажмите чтобы скопировать ☝\n\nОтправьте УКАЗАННУЮ СУММУ\nна счёт и ОТПРАВЬТЕ ЧЕК")
             asyncio.create_task(timer(message, state))
         else:
             await message.answer("\nМинимальная: 100\nМаксимальная: 100 000")   
@@ -293,47 +321,32 @@ async def check_handler(message: Message, state: FSMContext):
     await message.bot.send_message(constants.replenish_chat_id, str(message.chat.id), reply_markup=buttons.main_inline_admin_replenish_kb())
     await state.set_state(BotState.waiting_response)
 
-@dp.callback_query(BotState.waiting_response)
+@dp.callback_query(lambda c: c.data == "accept")
 async def query_handler(callback: CallbackQuery, state: FSMContext) -> None:
-    if callback.data == "accept":
        username = database.get_username(callback.message.text)
        await callback.message.bot.send_message(callback.message.text, "✅ Ваш счет пополнен!", reply_markup=buttons.main_kb(username))
        await callback.message.edit_reply_markup(None)
-       await callback.message.edit_text("Одорен")
-       
-       data = await state.get_data()
-       user_id = data.get("user_id")
-       xid = data.get("user_xbet_id")
-       amount = data.get("amount")
-       method = data.get("replenish")
-       
-       database.update_payment_history(user_id=user_id, username=username, xid=xid, amount=amount, method=method)
+       await callback.message.edit_text("Одобрен")
        await state.clear()
        
-    if(callback.data == "cancel"):
+@dp.callback_query(lambda c: c.data == "cancel")
+async def query_handler(callback: CallbackQuery, state: FSMContext) -> None:       
        username = database.get_username(callback.message.text)
        await callback.message.bot.send_message(callback.message.text, "❌ Ваша заявка была отклонена. Проверьте 1X ID или ЧЕК который вы отправили.\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(username))
        await callback.message.edit_reply_markup(None)
        await callback.message.edit_text("Отклонён")
        await state.clear()
        
-    if callback.data == "waccept":
+@dp.callback_query(lambda c: c.data == "waccpet")
+async def query_handler(callback: CallbackQuery, state: FSMContext) -> None:    
        username = database.get_username(callback.message.text)
        await callback.message.bot.send_message(callback.message.text, "✅ Вывод прошёл успешно", reply_markup=buttons.main_kb(username))
        await callback.message.edit_reply_markup(None)
-       await callback.message.edit_text("Одорен")
-       
-       data = await state.get_data()
-       user_id = data.get("user_id")
-       xid = data.get("user_xbet_id")
-       code = data.get("code")
-       method = data.get("withdraw")
-       props = data.get("withdraw_props")
-       
-       database.update_payment_history(user_id=user_id, username=username, xid=xid, code=code, method=method, props=props)
+       await callback.message.edit_text("Одобрен")
        await state.clear()
        
-    if(callback.data == "wcancel"):
+@dp.callback_query(lambda c: c.data == "wcancel")
+async def query_handler(callback: CallbackQuery, state: FSMContext) -> None:    
        username = database.get_username(callback.message.text)
        await callback.message.bot.send_message(callback.message.text, "❌ Ваша заявка была отклонена. Проверьте 1X ID или НОМЕР который вы отправили.\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(username))
        await callback.message.edit_reply_markup(None)
@@ -355,3 +368,4 @@ async def main() -> None:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main(), debug=True)
+    

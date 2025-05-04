@@ -3,6 +3,7 @@ data = database.get_bot_data()
 
 bot_admin = data["admin"] or "none"
 bot_props = data["props"] or "none"
+bot_new_props = "none"
 
 
 
