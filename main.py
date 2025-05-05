@@ -52,12 +52,9 @@ class BotState(StatesGroup):
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message, state) -> None:
-    current_state = await state.get_state()
-    if current_state != BotState.waiting_response:
-     await state.clear()
-     await message.answer(f"Привет, {html.bold(message.from_user.full_name)}!\n\n💎 Пополнение/Вывод: 0%\n🐬 Моментальные пополнения\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(message.from_user.username))
-    else:
-     await message.answer("Пожалуйста дождитесь финального ответа системы!")
+    await state.clear()
+    await message.answer(f"Привет, {html.bold(message.from_user.full_name)}!\n\n💎 Пополнение/Вывод: 0%\n🐬 Моментальные пополнения\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(message.from_user.username))
+
         
 @dp.message(F.text == "Отменить")
 async def cancel_handler(message: Message, state: FSMContext):
@@ -294,6 +291,8 @@ async def timer(message: Message, state: FSMContext, duration: int = 300):
         current_state = await state.get_state()
         if current_state is None or current_state != BotState.replenish_check.state:
             logging.info("Таймер был отменён")
+            await timer_message.delete()
+            await message.bot.delete_message(chat_id=message.chat.id, message_id=timer_message.message_id - 1)
             break
 
     current_state = await state.get_state()
@@ -322,36 +321,32 @@ async def check_handler(message: Message, state: FSMContext):
     await state.set_state(BotState.waiting_response)
 
 @dp.callback_query(lambda c: c.data == "accept")
-async def query_handler(callback: CallbackQuery, state: FSMContext) -> None:
+async def query_handler(callback: CallbackQuery) -> None:
        username = database.get_username(callback.message.text)
        await callback.message.bot.send_message(callback.message.text, "✅ Ваш счет пополнен!", reply_markup=buttons.main_kb(username))
        await callback.message.edit_reply_markup(None)
        await callback.message.edit_text("Одобрен")
-       await state.clear()
        
 @dp.callback_query(lambda c: c.data == "cancel")
-async def query_handler(callback: CallbackQuery, state: FSMContext) -> None:       
+async def query_handler(callback: CallbackQuery) -> None:       
        username = database.get_username(callback.message.text)
        await callback.message.bot.send_message(callback.message.text, "❌ Ваша заявка была отклонена. Проверьте 1X ID или ЧЕК который вы отправили.\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(username))
        await callback.message.edit_reply_markup(None)
        await callback.message.edit_text("Отклонён")
-       await state.clear()
        
-@dp.callback_query(lambda c: c.data == "waccpet")
-async def query_handler(callback: CallbackQuery, state: FSMContext) -> None:    
+@dp.callback_query(lambda c: c.data == "waccept")
+async def query_handler(callback: CallbackQuery) -> None:    
        username = database.get_username(callback.message.text)
        await callback.message.bot.send_message(callback.message.text, "✅ Вывод прошёл успешно", reply_markup=buttons.main_kb(username))
        await callback.message.edit_reply_markup(None)
        await callback.message.edit_text("Одобрен")
-       await state.clear()
        
 @dp.callback_query(lambda c: c.data == "wcancel")
-async def query_handler(callback: CallbackQuery, state: FSMContext) -> None:    
+async def query_handler(callback: CallbackQuery) -> None:    
        username = database.get_username(callback.message.text)
        await callback.message.bot.send_message(callback.message.text, "❌ Ваша заявка была отклонена. Проверьте 1X ID или НОМЕР который вы отправили.\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(username))
        await callback.message.edit_reply_markup(None)
        await callback.message.edit_text("Отклонён")
-       await state.clear() 
 # 
             
             
