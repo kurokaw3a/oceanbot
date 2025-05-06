@@ -303,7 +303,7 @@ async def timer(message: Message, state: FSMContext, duration: int = 300):
         )
         await state.clear()
         
-@dp.message(BotState.replenish_check)
+@dp.message(BotState.replenish_check, F.photo)
 async def check_handler(message: Message, state: FSMContext):
     await state.update_data(user_id=message.chat.id)
     
