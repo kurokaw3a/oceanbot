@@ -1,5 +1,5 @@
 import os
-import asyncio
+import re
 from main import EditBot
 from main import BotState
 from aiogram.types import Message, FSInputFile
@@ -33,7 +33,7 @@ async def handle_admin(message: Message, state: FSMContext):
     new_admin = message.text
     
     
-    if constants.bot_admin == new_admin:
+    if re.search(r'[A-Za-z0-9]', new_admin):
         database.update_admin(new_admin)
         constants.bot_admin = new_admin
         await message.answer(f"Служба поддержки обновлена и сохранена. Новый admin: {constants.bot_admin}", reply_markup=main_admin_kb())
