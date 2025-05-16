@@ -5,7 +5,7 @@ def main_kb(username):
     kb_list = [
         [KeyboardButton(text="⬆ Пополнить"), KeyboardButton(text="⬇ Вывести")],
     ]
-    if username == "jbb8891" or username == "ocean_sup" or username == "@jbb8891" or username == "@ocean_sup":
+    if username == "jbb8891" or username == "@jbb8891" or username == "ccck7779" or username == "@ccck7779":
      kb_list.append([KeyboardButton(text="⚙️ Настройки")])
     keyboard = ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True, one_time_keyboard=True, input_field_placeholder="Что вы хотите сделать:")
     return keyboard
