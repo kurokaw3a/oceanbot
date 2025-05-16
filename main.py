@@ -21,7 +21,7 @@ import buttons
 IMG_DIR = "images"
 os.makedirs(IMG_DIR, exist_ok=True)
 
-TOKEN = "7634290632:AAE1L9v9hEi9BsL1OCSBcumzR4EasGaIK3E"
+TOKEN = "7796605332:AAFgGe-30IBGMSkxD9KQKp8GNFuxtEJbcdE"
 
 dp = Dispatcher(storage=MemoryStorage())
 
@@ -130,15 +130,15 @@ async def withdraw_query_handler(callback: CallbackQuery, state: FSMContext) -> 
         if(callback.data == "withdraw1"):
             await state.update_data(withdraw="МБАНК")
             await callback.message.edit_text("Метод вывода: " + "МБАНК")
-            await callback.message.answer("Введите номер кошелка")
+            await callback.message.answer("Введите номер кошелька")
         if(callback.data == "withdraw2"):
             await state.update_data(withdraw="О Деньги!")
             await callback.message.edit_text("Метод вывода: " + "О Деньги!")
-            await callback.message.answer("Введите номер кошелка")
+            await callback.message.answer("Введите номер кошелька")
         if(callback.data == "withdraw3"):
             await state.update_data(withdraw="По номеру карты")
             await callback.message.edit_text("Метод вывода: " + "По номеру карты")
-            await callback.message.answer("Введите номер кошелка")
+            await callback.message.answer("Введите номер кошелька")
 
 @dp.message(BotState.withdraw_props)
 async def withdraw_props_handler(message: Message, state: FSMContext) -> None:
@@ -167,8 +167,12 @@ async def withdraw_id_handler(message: Message, state: FSMContext) -> None:
                 await state.update_data(user_xbet_id=message.text)
                 await state.set_state(BotState.withdraw_code)
                 
-                await message.answer(f"Адрес вывода: Город {constants.city} Улица {constants.street}")
-                await message.answer("Введите код от 1X", reply_markup=buttons.main_cancel_kb())
+                video = FSInputFile('images/vid.mp4')
+                await message.answer_video(video, reply_markup=buttons.main_cancel_kb())
+                
+                
+                await message.answer("Вывод доступен через > mobcash > 1 > Ocean KG")
+                await message.answer("Введите код от 1X")
             else:
                 await message.answer("Слишком короткий код")
       else:

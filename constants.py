@@ -9,7 +9,3 @@ bot_new_props = "none"
 
 replenish_chat_id = "-4848200249"
 withdraw_chat_id = "-4860460603"
-
-
-city = "Кочкор-Ата"
-street = "Ocean"
