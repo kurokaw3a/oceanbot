@@ -58,7 +58,7 @@ def main_admin_props_edit_kb():
 def main_inline_replenish_kb():
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="По номеру телефона (Любой банк)", callback_data="replenish1"),
+        # InlineKeyboardButton(text="По номеру телефона (Любой банк)", callback_data="replenish1"),
         InlineKeyboardButton(text="Через QR (Любой банк)", callback_data="replenish2")
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=builder.export())
