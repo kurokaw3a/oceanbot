@@ -21,7 +21,7 @@ import buttons
 IMG_DIR = "images"
 os.makedirs(IMG_DIR, exist_ok=True)
 
-TOKEN = "7796605332:AAFgGe-30IBGMSkxD9KQKp8GNFuxtEJbcdE"
+TOKEN = "7634290632:AAE1L9v9hEi9BsL1OCSBcumzR4EasGaIK3E"
 
 dp = Dispatcher(storage=MemoryStorage())
 
@@ -130,15 +130,15 @@ async def withdraw_query_handler(callback: CallbackQuery, state: FSMContext) -> 
         if(callback.data == "withdraw1"):
             await state.update_data(withdraw="МБАНК")
             await callback.message.edit_text("Метод вывода: " + "МБАНК")
-            await callback.message.answer("Введите номер кошелька")
+            await callback.message.answer("Введите номер кошелка")
         if(callback.data == "withdraw2"):
             await state.update_data(withdraw="О Деньги!")
             await callback.message.edit_text("Метод вывода: " + "О Деньги!")
-            await callback.message.answer("Введите номер кошелька")
+            await callback.message.answer("Введите номер кошелка")
         if(callback.data == "withdraw3"):
             await state.update_data(withdraw="По номеру карты")
             await callback.message.edit_text("Метод вывода: " + "По номеру карты")
-            await callback.message.answer("Введите номер кошелька")
+            await callback.message.answer("Введите номер кошелка")
 
 @dp.message(BotState.withdraw_props)
 async def withdraw_props_handler(message: Message, state: FSMContext) -> None:
@@ -167,12 +167,8 @@ async def withdraw_id_handler(message: Message, state: FSMContext) -> None:
                 await state.update_data(user_xbet_id=message.text)
                 await state.set_state(BotState.withdraw_code)
                 
-                video = FSInputFile('images/vid.mp4')
-                await message.answer_video(video, reply_markup=buttons.main_cancel_kb())
-                
-                
-                await message.answer("Вывод доступен через > mobcash > 1 > Ocean KG")
-                await message.answer("Введите код от 1X")
+                await message.answer(f"Адрес вывода: Город {constants.city} Улица {constants.street}")
+                await message.answer("Введите код от 1X", reply_markup=buttons.main_cancel_kb())
             else:
                 await message.answer("Слишком короткий код")
       else:
@@ -196,10 +192,7 @@ async def withdraw_code_handler(message: Message, state: FSMContext) -> None:
         
         
         await(message.answer("🕘 Ваша заявка в расмотрении...\n\nПожалуйста дождитесь финального ответа системы!", reply_markup=None))
-        
-        await message.bot.send_message(constants.chat, f"{html.bold('ЗАПРОС НА ВЫВОД')}\n\nПользователь: @{username}\nМетод: {method}\nРеквизит: {html.code(props)}\n1X ID: {html.code(xid)}\nКод: {html.code(code)}")
-        await message.bot.send_message(constants.chat, str(message.chat.id), reply_markup=buttons.main_inline_admin_withdraw_kb())
-        
+    
         await message.bot.send_message(constants.withdraw_chat_id, f"{html.bold('ЗАПРОС НА ВЫВОД')}\n\nПользователь: @{username}\nМетод: {method}\nРеквизит: {html.code(props)}\n1X ID: {html.code(xid)}\nКод: {html.code(code)}")
         await message.bot.send_message(constants.withdraw_chat_id, str(message.chat.id), reply_markup=buttons.main_inline_admin_withdraw_kb())
         await state.set_state(BotState.waiting_response)
@@ -321,10 +314,6 @@ async def check_handler(message: Message, state: FSMContext):
     database.update_user(message.chat.id, message.from_user.username, xid)
     
     await(message.answer("🕘 Ваша заявка в расмотрении...\n\nПожалуйста дождитесь финального ответа системы!", reply_markup=None))
-     
-    await message.bot.forward_message(constants.chat, message.chat.id, message.message_id)
-    await message.bot.send_message(constants.chat, f"Пользователь: @{message.from_user.username}\n1X ID: {html.code(xid)}\nМетод: {method}")
-    await message.bot.send_message(constants.chat, str(message.chat.id), reply_markup=buttons.main_inline_admin_replenish_kb()) 
      
     await message.bot.forward_message(constants.replenish_chat_id, message.chat.id, message.message_id)
     await message.bot.send_message(constants.replenish_chat_id, f"Пользователь: @{message.from_user.username}\n1X ID: {html.code(xid)}\nМетод: {method}")

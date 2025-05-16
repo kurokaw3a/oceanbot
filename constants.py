@@ -6,7 +6,10 @@ bot_props = data["props"] or "none"
 bot_new_props = "none"
 
 
-chat = "-4946470434"
 
-replenish_chat_id = "-4797576987"
-withdraw_chat_id = "-4803024130"
+replenish_chat_id = "-4631439801"
+withdraw_chat_id = "-4710997945"
+
+
+city = "Кочкор-Ата"
+street = "Ocean"

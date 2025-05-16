@@ -5,7 +5,7 @@ def main_kb(username):
     kb_list = [
         [KeyboardButton(text="⬆ Пополнить"), KeyboardButton(text="⬇ Вывести")],
     ]
-    if username == "jbb8891" or username == "@jbb8891" or username == "ccck7779" or username == "@ccck7779":
+    if username == "jbb8891" or username == "ocean_sup" or username == "@jbb8891" or username == "@ocean_sup":
      kb_list.append([KeyboardButton(text="⚙️ Настройки")])
     keyboard = ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True, one_time_keyboard=True, input_field_placeholder="Что вы хотите сделать:")
     return keyboard
@@ -58,7 +58,7 @@ def main_admin_props_edit_kb():
 def main_inline_replenish_kb():
     builder = InlineKeyboardBuilder()
     builder.row(
-        # InlineKeyboardButton(text="По номеру телефона (Любой банк)", callback_data="replenish1"),
+        InlineKeyboardButton(text="По номеру телефона (Любой банк)", callback_data="replenish1"),
         InlineKeyboardButton(text="Через QR (Любой банк)", callback_data="replenish2")
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=builder.export())
