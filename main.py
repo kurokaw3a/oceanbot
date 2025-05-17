@@ -53,11 +53,14 @@ class BotState(StatesGroup):
 @dp.message(CommandStart())
 async def command_start_handler(message: Message, state) -> None:
     status = await message.bot.get_chat_member(constants.channel, message.chat.id)
-    if status.status != "left":
-     await state.clear()
-     await message.answer(f"Привет, {html.bold(message.from_user.full_name)}!\n\n💎 Пополнение/Вывод: 0%\n🐬 Моментальные пополнения\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(message.from_user.username))
+    if status.status == "kicked":
+        await message.answer("Вы были заблокировны")
     else:
-     await message.answer("Что-бы продолжить подпишитесь на канал", reply_markup=buttons.subscribe_kb())
+     if status.status != "left":
+      await state.clear()
+      await message.answer(f"Привет, {html.bold(message.from_user.full_name)}!\n\n💎 Пополнение/Вывод: 0%\n🐬 Моментальные пополнения\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(message.from_user.username))
+     else:
+      await message.answer("Что-бы продолжить подпишитесь на канал", reply_markup=buttons.subscribe_kb())
         
 @dp.message(F.text == "Отменить")
 async def cancel_handler(message: Message, state: FSMContext):
@@ -74,23 +77,29 @@ async def cancel_handler(message: Message, state: FSMContext):
 @dp.message(F.text == "⬆ Пополнить")
 async def replenish_handler(message: Message, state: FSMContext):
     status = await message.bot.get_chat_member(constants.channel, message.chat.id)
-    if status.status != "left":    
+    if status.status == "kicked":
+        await message.answer("Вы были заблокировны")
+    else:
+     if status.status != "left":    
       await state.set_state(BotState.replenish)
       await message.answer("⬆", reply_markup=buttons.main_cancel_kb())
       await message.answer("Выберите способ пополнения:", reply_markup=buttons.main_inline_replenish_kb())
-    else:
-     await message.answer("Что-бы продолжить подпишитесь на канал", reply_markup=buttons.subscribe_kb())
+     else:
+      await message.answer("Что-бы продолжить подпишитесь на канал", reply_markup=buttons.subscribe_kb())
      
 @dp.message(F.text == "⬇ Вывести") 
 async def withdraw_handler(message: Message, state: FSMContext):
     status = await message.bot.get_chat_member(constants.channel, message.chat.id)
-    if status.status != "left":
+    if status.status == "kicked":
+        await message.answer("Вы были заблокировны")
+    else:
+     if status.status != "left":
       await state.set_state(BotState.withdraw)
       await message.answer("⬇", reply_markup=buttons.main_cancel_kb())
       await message.answer("❗ВАЖНО!!! ВЫВОД СРЕДСТВ ОСУЩЕСТВЛЯЕТСЯ ТОЛЬКО НА ТЕ РЕКВИЗИТЫ С КОТОРЫХ БЫЛ СОВЕРШЕН ПЛАТЁЖ❗")
       await message.answer("Выберите способ вывода:", reply_markup=buttons.main_inline_withdraw_kb())
-    else:
-     await message.answer("Что-бы продолжить подпишитесь на канал", reply_markup=buttons.subscribe_kb())
+     else:
+      await message.answer("Что-бы продолжить подпишитесь на канал", reply_markup=buttons.subscribe_kb())
 # 
 
 
@@ -375,6 +384,16 @@ async def query_handler(callback: CallbackQuery) -> None:
        await callback.message.bot.send_message(callback.message.text, "❌ Ваша заявка была отклонена. Проверьте 1X ID или НОМЕР который вы отправили.\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(username))
        await callback.message.edit_reply_markup(None)
        await callback.message.edit_text("Отклонён")
+       
+@dp.callback_query(lambda c: c.data == "block_user")
+async def query_handler(callback: CallbackQuery) -> None:
+    await callback.message.bot.ban_chat_member(callback.message.text, callback.message.from_user.id)
+    await callback.message.edit_reply_markup(buttons.unblock_kb())
+
+@dp.callback_query(lambda c: c.data == "unblock_user")
+async def query_handler(callback: CallbackQuery) -> None:
+    await callback.message.bot.unban_chat_member(callback.message.text, callback.message.from_user.id)
+    await callback.message.edit_reply_markup(buttons.block_kb())    
 # 
             
             

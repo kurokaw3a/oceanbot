@@ -86,6 +86,9 @@ def main_inline_admin_replenish_kb():
         InlineKeyboardButton(text="Одобрить", callback_data="accept"),
         InlineKeyboardButton(text="Отклонить", callback_data="cancel"),
     )
+    builder.row(
+        InlineKeyboardButton(text="Заблокировать", callback_data="block_user"),
+    )
     keyboard = InlineKeyboardMarkup(inline_keyboard=builder.export())
     return keyboard
 
@@ -94,6 +97,9 @@ def main_inline_admin_withdraw_kb():
     builder.row(
         InlineKeyboardButton(text="Одобрить", callback_data="waccept"),
         InlineKeyboardButton(text="Отклонить", callback_data="wcancel"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="Заблокировать", callback_data="block_user"),
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=builder.export())
     return keyboard
@@ -104,6 +110,22 @@ def subscribe_kb():
     builder.row(
         InlineKeyboardButton(text="Подписаться", url="https://t.me/ocean_kg"),
         InlineKeyboardButton(text="Проверить", callback_data="subscribe"),
+    )
+    keyboard = InlineKeyboardMarkup(inline_keyboard=builder.export())
+    return keyboard
+
+def block_kb():
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="Заблокировать", callback_data="block_user"),
+    )
+    keyboard = InlineKeyboardMarkup(inline_keyboard=builder.export())
+    return keyboard
+
+def unblock_kb():
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="Разблокировать", callback_data="unblock_user"),
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=builder.export())
     return keyboard
