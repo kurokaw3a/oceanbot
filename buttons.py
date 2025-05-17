@@ -98,9 +98,9 @@ def main_inline_admin_withdraw_kb():
         InlineKeyboardButton(text="Одобрить", callback_data="waccept"),
         InlineKeyboardButton(text="Отклонить", callback_data="wcancel"),
     )
-    # builder.row(
-    #     InlineKeyboardButton(text="Заблокировать", callback_data="block_user"),
-    # )
+    builder.row(
+        InlineKeyboardButton(text="Заблокировать", callback_data="block_user"),
+    )
     keyboard = InlineKeyboardMarkup(inline_keyboard=builder.export())
     return keyboard
 
