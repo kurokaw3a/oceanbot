@@ -84,10 +84,10 @@ def get_user_data(user_id):
         else:
          return result[0]
      
-def get_user_id(user_id):
+def get_user_id(chat_id):
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT user_id FROM Users WHERE id = ?", (user_id,))
+        cursor.execute("SELECT user_id FROM Users WHERE id = ?", (chat_id,))
         result = cursor.fetchone()
         if not result:
          return None
