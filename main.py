@@ -56,7 +56,7 @@ async def command_start_handler(message: Message, state) -> None:
     if status.status == "kicked":
         await message.answer("Вы были заблокировны")
     else:
-     if status.status != "left":
+     if status.status != "left" and message.chat.id != constants.replenish_chat_id and message.chat.id != constants.withdraw_chat_id and message.chat.id != constants.channel:
       await state.clear()
       await message.answer(f"Привет, {html.bold(message.from_user.full_name)}!\n\n💎 Пополнение/Вывод: 0%\n🐬 Моментальные пополнения\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(message.from_user.username))
      else:
@@ -80,7 +80,7 @@ async def replenish_handler(message: Message, state: FSMContext):
     if status.status == "kicked":
         await message.answer("Вы были заблокировны")
     else:
-     if status.status != "left":    
+     if status.status != "left" and message.chat.id != constants.replenish_chat_id and message.chat.id != constants.withdraw_chat_id and message.chat.id != constants.channel:    
       await state.set_state(BotState.replenish)
       await message.answer("⬆", reply_markup=buttons.main_cancel_kb())
       await message.answer("Выберите способ пополнения:", reply_markup=buttons.main_inline_replenish_kb())
@@ -93,7 +93,7 @@ async def withdraw_handler(message: Message, state: FSMContext):
     if status.status == "kicked":
         await message.answer("Вы были заблокировны")
     else:
-     if status.status != "left":
+     if status.status != "left" and message.chat.id != constants.replenish_chat_id and message.chat.id != constants.withdraw_chat_id and message.chat.id != constants.channel:
       await state.set_state(BotState.withdraw)
       await message.answer("⬇", reply_markup=buttons.main_cancel_kb())
       await message.answer("❗ВАЖНО!!! ВЫВОД СРЕДСТВ ОСУЩЕСТВЛЯЕТСЯ ТОЛЬКО НА ТЕ РЕКВИЗИТЫ С КОТОРЫХ БЫЛ СОВЕРШЕН ПЛАТЁЖ❗")
@@ -108,6 +108,7 @@ async def withdraw_handler(message: Message, state: FSMContext):
 # 
 @dp.message(F.text == "⚙️ Настройки")
 async def admin_handler(message: Message, state: FSMContext):
+    if message.chat.id != constants.replenish_chat_id and message.chat.id != constants.withdraw_chat_id and message.chat.id != constants.channel:
       await admin.admin_handler(message, state) 
     
 @dp.message(BotState.admin)
