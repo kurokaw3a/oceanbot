@@ -11,7 +11,7 @@ def get_connection():
     cursor.execute('''CREATE TABLE IF NOT EXISTS Bot (id INTEGER PRIMARY KEY, admin TEXT NOT NULL, props TEXT NOT NULL)''')
     cursor.execute('INSERT OR IGNORE INTO Bot (id, admin, props) VALUES (?, ?, ?)', (1, 'ocean_sup', "996100200300"))
     cursor.execute('''CREATE TABLE IF NOT EXISTS Props (id INTEGER PRIMARY KEY, props TEXT)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS Users (id INTEGER PRIMARY KEY, username TEXT, xid INTEGER)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS Users (id INTEGER PRIMARY KEY, user_id INTERGER, username TEXT, xid INTEGER)''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS Payments (date TEXT, id INTEGER, username TEXT, xid INTEGER, sum INTEGER, method TEXT)''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS Withdraws (date TEXT, id INTEGER, username TEXT, xid INTEGER, code INTEGER, method TEXT, props TEXT)''')
 
@@ -83,6 +83,16 @@ def get_user_data(user_id):
          return None
         else:
          return result[0]
+     
+def get_user_id(user_id):
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT user_id FROM Users WHERE id = ?", (user_id,))
+        result = cursor.fetchone()
+        if not result:
+         return None
+        else:
+         return result[0]     
 
 def get_username(user_id):
     with get_connection() as conn:
@@ -94,22 +104,23 @@ def get_username(user_id):
          return None
         else:
          return result[0]
+
         
-def update_user(user_id: int, username: str, xid: int):
+def update_user(chat_id: int, user_id: int, username: str, xid: int):
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT xid FROM Users WHERE id = ?", (user_id,))
-        result = cursor.fetchone()
+        xid = cursor.execute("SELECT xid FROM Users WHERE id = ?", (chat_id,)).fetchone()
+        user_id = cursor.execute("SELECT user_id FROM Users WHERE id = ?", (chat_id,)).fetchone()
 
-        if not result:
+        if not xid or not user_id:
             cursor.execute(
-                "INSERT INTO Users (id, username, xid) VALUES (?, ?, ?)",
-                (user_id, username, xid)
+                "INSERT INTO Users (id, user_id, username, xid) VALUES (?, ?, ?, ?)",
+                (chat_id, user_id, username, xid)
             )
         else:
-            current_xid = result[0]
+            current_xid = xid[0]
             if current_xid != xid:
-                cursor.execute("UPDATE Users SET xid = ? WHERE id = ?",(xid, user_id))
+                cursor.execute("UPDATE Users SET xid = ? WHERE id = ?",(xid, chat_id))
                 
                 
                 
