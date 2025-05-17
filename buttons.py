@@ -1,6 +1,8 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+
+
 def main_kb(username):
     kb_list = [
         [KeyboardButton(text="⬆ Пополнить"), KeyboardButton(text="⬇ Вывести")],
@@ -92,6 +94,16 @@ def main_inline_admin_withdraw_kb():
     builder.row(
         InlineKeyboardButton(text="Одобрить", callback_data="waccept"),
         InlineKeyboardButton(text="Отклонить", callback_data="wcancel"),
+    )
+    keyboard = InlineKeyboardMarkup(inline_keyboard=builder.export())
+    return keyboard
+
+
+def subscribe_kb():
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="Подписаться", url="https://t.me/ocean_kg"),
+        InlineKeyboardButton(text="Проверить", callback_data="subscribe"),
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=builder.export())
     return keyboard

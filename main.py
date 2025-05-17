@@ -52,9 +52,12 @@ class BotState(StatesGroup):
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message, state) -> None:
-    await state.clear()
-    await message.answer(f"Привет, {html.bold(message.from_user.full_name)}!\n\n💎 Пополнение/Вывод: 0%\n🐬 Моментальные пополнения\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(message.from_user.username))
-
+    status = await message.bot.get_chat_member(constants.channel, message.chat.id)
+    if status.status != "left":
+     await state.clear()
+     await message.answer(f"Привет, {html.bold(message.from_user.full_name)}!\n\n💎 Пополнение/Вывод: 0%\n🐬 Моментальные пополнения\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(message.from_user.username))
+    else:
+     await message.answer("Что-бы продолжить подпишитесь на канал", reply_markup=buttons.subscribe_kb())
         
 @dp.message(F.text == "Отменить")
 async def cancel_handler(message: Message, state: FSMContext):
@@ -70,16 +73,24 @@ async def cancel_handler(message: Message, state: FSMContext):
 # 
 @dp.message(F.text == "⬆ Пополнить")
 async def replenish_handler(message: Message, state: FSMContext):
+    status = await message.bot.get_chat_member(constants.channel, message.chat.id)
+    if status.status != "left":    
       await state.set_state(BotState.replenish)
       await message.answer("⬆", reply_markup=buttons.main_cancel_kb())
       await message.answer("Выберите способ пополнения:", reply_markup=buttons.main_inline_replenish_kb())
-
+    else:
+     await message.answer("Что-бы продолжить подпишитесь на канал", reply_markup=buttons.subscribe_kb())
+     
 @dp.message(F.text == "⬇ Вывести") 
 async def withdraw_handler(message: Message, state: FSMContext):
+    status = await message.bot.get_chat_member(constants.channel, message.chat.id)
+    if status.status != "left":
       await state.set_state(BotState.withdraw)
       await message.answer("⬇", reply_markup=buttons.main_cancel_kb())
       await message.answer("❗ВАЖНО!!! ВЫВОД СРЕДСТВ ОСУЩЕСТВЛЯЕТСЯ ТОЛЬКО НА ТЕ РЕКВИЗИТЫ С КОТОРЫХ БЫЛ СОВЕРШЕН ПЛАТЁЖ❗")
       await message.answer("Выберите способ вывода:", reply_markup=buttons.main_inline_withdraw_kb())
+    else:
+     await message.answer("Что-бы продолжить подпишитесь на канал", reply_markup=buttons.subscribe_kb())
 # 
 
 
@@ -327,6 +338,15 @@ async def check_handler(message: Message, state: FSMContext):
     await message.bot.send_message(constants.replenish_chat_id, f"Пользователь: @{message.from_user.username}\n1X ID: {html.code(xid)}\nМетод: {method}")
     await message.bot.send_message(constants.replenish_chat_id, str(message.chat.id), reply_markup=buttons.main_inline_admin_replenish_kb())
     await state.set_state(BotState.waiting_response)
+
+@dp.callback_query(lambda c: c.data == "subscribe")
+async def query_handler(callback: CallbackQuery) -> None:
+    status = await callback.message.bot.get_chat_member(constants.channel, callback.message.chat.id)
+    
+    if status.status != "left":
+        await callback.message.answer(f"Привет, {html.bold(callback.message.from_user.full_name)}!\n\n💎 Пополнение/Вывод: 0%\n🐬 Моментальные пополнения\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(callback.message.from_user.username))
+    else:
+        await callback.bot.answer_callback_query(callback_query_id=callback.id, text='Вы не подписались!')
 
 @dp.callback_query(lambda c: c.data == "accept")
 async def query_handler(callback: CallbackQuery) -> None:
