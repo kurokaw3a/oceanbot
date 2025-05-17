@@ -404,9 +404,8 @@ async def query_handler(callback: CallbackQuery) -> None:
 @dp.callback_query(lambda c: c.data == "block_user")
 async def query_handler(callback: CallbackQuery) -> None:
     data = database.get_user_id(callback.message.text)
-    user_id = data["user_id"]
     
-    await callback.message.bot.ban_chat_member(callback.message.text, user_id)
+    await callback.message.bot.ban_chat_member(callback.message.text, data)
     await callback.message.edit_reply_markup(buttons.unblock_kb())
 
 @dp.callback_query(lambda c: c.data == "unblock_user")
@@ -414,7 +413,7 @@ async def query_handler(callback: CallbackQuery) -> None:
     data = database.get_user_id(callback.message.text)
     user_id = data["user_id"]
     
-    await callback.message.bot.unban_chat_member(callback.message.text, user_id)
+    await callback.message.bot.unban_chat_member(callback.message.text, data)
     await callback.message.edit_reply_markup(buttons.block_kb())    
 # 
             
