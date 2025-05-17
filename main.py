@@ -45,6 +45,7 @@ class BotState(StatesGroup):
     withdraw = State()
     withdraw_props = State()
     withdraw_id = State()
+    withdraw_sum = State()
     withdraw_code = State()
     
 
@@ -186,14 +187,27 @@ async def withdraw_id_handler(message: Message, state: FSMContext) -> None:
             id_length = len(message.text)
             if id_length > 6:
                 await state.update_data(user_xbet_id=message.text)
-                await state.set_state(BotState.withdraw_code)
+                await state.set_state(BotState.withdraw_sum)
                 
-                await message.answer(f"Адрес вывода: Город {constants.city} Улица {constants.street}")
-                await message.answer("Введите код от 1X", reply_markup=buttons.main_cancel_kb())
+                await message.answer("Укажите сумму вывода KGS.\nМинимальная: 150", reply_markup=buttons.main_cancel_kb())
             else:
                 await message.answer("Слишком короткий код")
       else:
             await message.answer("Укажите правильный ID (только цифры).")
+
+@dp.message(BotState.withdraw_sum)
+async def withdraw_sum_handler(message: Message, state: FSMContext) -> None:
+    if message.text.isdigit():
+        user_sum = int(message.text)
+        if user_sum > 149:
+            await state.update_data(user_sum=message.text)
+            await state.set_state(BotState.withdraw_code)
+            
+            await message.answer(f"Адрес вывода: Город {constants.city} Улица {constants.street}")
+            await message.answer("Введите код от 1X", reply_markup=buttons.main_cancel_kb())
+        else:
+            await message.answer("Мимиальная сумма вывода 150 KGS")
+            
 
 @dp.message(BotState.withdraw_code)
 async def withdraw_code_handler(message: Message, state: FSMContext) -> None:
@@ -207,6 +221,7 @@ async def withdraw_code_handler(message: Message, state: FSMContext) -> None:
         method = data.get("withdraw")
         props = data.get("withdraw_props")
         xid = data.get("user_xbet_id")
+        amount = data.get("user_sum")
         code = message.text
         username = message.from_user.username
         
@@ -214,10 +229,10 @@ async def withdraw_code_handler(message: Message, state: FSMContext) -> None:
         
         await(message.answer("🕘 Ваша заявка в расмотрении...\n\nПожалуйста дождитесь финального ответа системы!", reply_markup=None))
         
-        await message.bot.send_message(constants.chat, f"{html.bold('ЗАПРОС НА ВЫВОД')}\n\nПользователь: @{username}\nМетод: {method}\nРеквизит: {html.code(props)}\n1X ID: {html.code(xid)}\nКод: {html.code(code)}")
+        await message.bot.send_message(constants.chat, f"{html.bold('ЗАПРОС НА ВЫВОД')}\n\nПользователь: @{username}\nМетод: {method}\nРеквизит: {html.code(props)}\n1X ID: {html.code(xid)}\nКод: {html.code(code)}\nСумма: {amount}")
         await message.bot.send_message(constants.chat, str(message.chat.id))
         
-        await message.bot.send_message(constants.withdraw_chat_id, f"{html.bold('ЗАПРОС НА ВЫВОД')}\n\nПользователь: @{username}\nМетод: {method}\nРеквизит: {html.code(props)}\n1X ID: {html.code(xid)}\nКод: {html.code(code)}")
+        await message.bot.send_message(constants.withdraw_chat_id, f"{html.bold('ЗАПРОС НА ВЫВОД')}\n\nПользователь: @{username}\nМетод: {method}\nРеквизит: {html.code(props)}\n1X ID: {html.code(xid)}\nКод: {html.code(code)}\nСумма: {amount}")
         await message.bot.send_message(constants.withdraw_chat_id, str(message.chat.id), reply_markup=buttons.main_inline_admin_withdraw_kb())
         await state.set_state(BotState.waiting_response)
 # 
