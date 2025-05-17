@@ -350,7 +350,7 @@ async def check_handler(message: Message, state: FSMContext):
     data = await state.get_data()
     xid = data.get("user_xbet_id")
     method = data.get("replenish")
-    database.update_user(message.chat.id, message.from_user.id, message.from_user.username, xid)
+    database.update_user(message.chat.id, message.from_user.username, xid)
     
     await(message.answer("🕘 Ваша заявка в расмотрении...\n\nПожалуйста дождитесь финального ответа системы!", reply_markup=None))
     
@@ -403,17 +403,12 @@ async def query_handler(callback: CallbackQuery) -> None:
        
 @dp.callback_query(lambda c: c.data == "block_user")
 async def query_handler(callback: CallbackQuery) -> None:
-    data = database.get_user_id(callback.message.text)
-    
-    await callback.message.bot.ban_chat_member(callback.message.text, data)
+    await callback.message.bot.ban_chat_member(callback.message.text, callback.message.from_user.id)
     await callback.message.edit_reply_markup(buttons.unblock_kb())
 
 @dp.callback_query(lambda c: c.data == "unblock_user")
 async def query_handler(callback: CallbackQuery) -> None:
-    data = database.get_user_id(callback.message.text)
-    user_id = data["user_id"]
-    
-    await callback.message.bot.unban_chat_member(callback.message.text, data)
+    await callback.message.bot.unban_chat_member(callback.message.text, callback.message.from_user.id)
     await callback.message.edit_reply_markup(buttons.block_kb())    
 # 
             
