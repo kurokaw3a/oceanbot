@@ -21,7 +21,7 @@ import buttons
 IMG_DIR = "images"
 os.makedirs(IMG_DIR, exist_ok=True)
 
-TOKEN = "7634290632:AAE1L9v9hEi9BsL1OCSBcumzR4EasGaIK3E"
+TOKEN = "7962616636:AAFtDhz5_83qhQSotCCgdDocIlKUf8lpuHY"
 
 dp = Dispatcher(storage=MemoryStorage())
 
@@ -53,15 +53,18 @@ class BotState(StatesGroup):
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message, state) -> None:
-    status = await message.bot.get_chat_member(constants.channel, message.chat.id)
-    if status.status == "kicked":
+    try:
+     status = await message.bot.get_chat_member(constants.channel, message.chat.id)
+     if status.status == "kicked":
         await message.answer("Вы были заблокировны")
-    else:
-     if status.status != "left" and message.chat.id != constants.replenish_chat_id and message.chat.id != constants.withdraw_chat_id and message.chat.id != constants.channel:
-      await state.clear()
-      await message.answer(f"Привет, {html.bold(message.from_user.full_name)}!\n\n💎 Пополнение/Вывод: 0%\n🐬 Моментальные пополнения\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(message.from_user.username))
      else:
-      await message.answer("Что-бы продолжить подпишитесь на канал", reply_markup=buttons.subscribe_kb())
+      if status.status != "left" and message.chat.id != constants.replenish_chat_id and message.chat.id != constants.withdraw_chat_id and message.chat.id != constants.channel:
+       await state.clear()
+       await message.answer(f"Привет, {html.bold(message.from_user.full_name)}!\n\n💎 Пополнение/Вывод: 0%\n🐬 Моментальные пополнения\n\nСлужба поддержки: @" + constants.bot_admin, reply_markup=buttons.main_kb(message.from_user.username))
+      else:
+       await message.answer("Что-бы продолжить подпишитесь на канал", reply_markup=buttons.subscribe_kb())
+    except TypeError:
+        await message.answer("Ошибка")
         
 @dp.message(F.text == "Отменить")
 async def cancel_handler(message: Message, state: FSMContext):
@@ -375,7 +378,7 @@ async def query_handler(callback: CallbackQuery) -> None:
 
 @dp.callback_query(lambda c: c.data == "accept")
 async def query_handler(callback: CallbackQuery) -> None:
-       username = database.get_username(callback.message.text)
+       username = database.get_username(callback.message.text)       
        await callback.message.bot.send_message(callback.message.text, "✅ Ваш счет пополнен!", reply_markup=buttons.main_kb(username))
        await callback.message.edit_reply_markup(None)
        await callback.message.edit_text("Одобрен")

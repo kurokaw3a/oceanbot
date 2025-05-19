@@ -10,9 +10,5 @@ channel_link = "https://t.me/ocean_kg"
 
 chat = "-4946470434"
 
-replenish_chat_id = "-4631439801"
-withdraw_chat_id = "-4710997945"
-
-
-city = "Кочкор-Ата"
-street = "Ocean"
+replenish_chat_id = "-4808077457"
+withdraw_chat_id = "-4820582902"
